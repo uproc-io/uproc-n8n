@@ -1,50 +1,41 @@
-import type {
-	IAuthenticateGeneric,
-	Icon,
+import {
+	ICredentialDataDecryptedObject,
 	ICredentialTestRequest,
 	ICredentialType,
+	IHttpRequestOptions,
 	INodeProperties,
 } from 'n8n-workflow';
 
 export class UProcApi implements ICredentialType {
-	name = 'uProcApi';
-
-	displayName = 'UProc API';
-
-	icon: Icon = { light: 'file:uproc-light.svg', dark: 'file:uproc-dark.svg' };
-
-	documentationUrl = 'https://docs.uproc.io';
-
+	name = 'uprocApi';
+	displayName = 'uProc API';
+	documentationUrl = 'uProc';
 	properties: INodeProperties[] = [
 		{
 			displayName: 'Email',
 			name: 'email',
 			type: 'string',
+			placeholder: 'name@email.com',
 			default: '',
-			placeholder: 'user@uproc.io',
-			description: 'Your UProc account email (Username)',
 		},
 		{
 			displayName: 'API Key',
 			name: 'apiKey',
 			type: 'string',
-			typeOptions: { password: true },
 			default: '',
-			description:
-				'Your UProc API key from Settings → Integrations page',
 		},
 	];
-
-	authenticate: IAuthenticateGeneric = {
-		type: 'generic',
-		properties: {
-			headers: {
-				Authorization:
-					'=Basic {{base64($credentials.email + ":" + $credentials.apiKey)}}',
-			},
-		},
-	};
-
+	async authenticate(
+		credentials: ICredentialDataDecryptedObject,
+		requestOptions: IHttpRequestOptions,
+	): Promise<IHttpRequestOptions> {
+		const token = Buffer.from(`${credentials.email}:${credentials.apiKey}`).toString('base64');
+		requestOptions.headers = {
+			...requestOptions.headers,
+			Authorization: `Basic ${token}`,
+		};
+		return requestOptions;
+	}
 	test: ICredentialTestRequest = {
 		request: {
 			baseURL: 'https://api.uproc.io/api/v2',
